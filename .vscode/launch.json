@@ -12,9 +12,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "D:/blocker-1/.pio/build/fm-devkit/firmware.elf",
+            "executable": "/Users/emre/Desktop/blocker/.pio/build/fm-devkit/firmware.elf",
             "projectEnvName": "fm-devkit",
-            "toolchainBinDir": "C:/Users/emrec/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "toolchainBinDir": "/Users/emre/.platformio/packages/toolchain-xtensa-esp32/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": {
                 "type": "PlatformIO",
@@ -25,18 +25,18 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "D:/blocker-1/.pio/build/fm-devkit/firmware.elf",
+            "executable": "/Users/emre/Desktop/blocker/.pio/build/fm-devkit/firmware.elf",
             "projectEnvName": "fm-devkit",
-            "toolchainBinDir": "C:/Users/emrec/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "toolchainBinDir": "/Users/emre/.platformio/packages/toolchain-xtensa-esp32/bin",
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "D:/blocker-1/.pio/build/fm-devkit/firmware.elf",
+            "executable": "/Users/emre/Desktop/blocker/.pio/build/fm-devkit/firmware.elf",
             "projectEnvName": "fm-devkit",
-            "toolchainBinDir": "C:/Users/emrec/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "toolchainBinDir": "/Users/emre/.platformio/packages/toolchain-xtensa-esp32/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "loadMode": "manual"
         }

@@ -8,19 +8,35 @@ SPIClass spi2(HSPI);
 RF24 radio1(5, 17);
 RF24 radio2(4, 15);
 
-const byte address[6] = "00001";
+// Bluetooth classic channels from nrfbox
+const byte bluetooth_channels[] = {32, 34, 46, 48, 50, 52, 0, 1, 2, 4, 6, 8, 22, 24, 26, 28, 30, 74, 76, 78, 80};
+const byte ble_channels[] = {2, 26, 80};
 
-const int BT_CH_START1 = 2;
-const int BT_CH_END1   = 40;
-const int BT_CH_START2 = 41;
-const int BT_CH_END2   = 80;
+const int btCount  = sizeof(bluetooth_channels) / sizeof(bluetooth_channels[0]);
+const int bleCount = sizeof(ble_channels) / sizeof(ble_channels[0]);
 
-byte p = 0xFF;
+// skip every other channel — adjacent channels bleed into each other at 1MBPS
+const byte channelGroup1[] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36};
+const byte channelGroup2[] = {40, 44, 48, 52, 56, 60, 64, 68, 72, 76};
+
+const int group1Count = sizeof(channelGroup1) / sizeof(channelGroup1[0]);
+const int group2Count = sizeof(channelGroup2) / sizeof(channelGroup2[0]);
+
+byte p = 0xFF; // single byte instead of "xxxxxxxxxxxxxxxx"
+
+void setupRadio(RF24 &radio) {
+  radio.setAutoAck(false);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.setDataRate(RF24_2MBPS);
+  radio.setRetries(0, 0);
+  radio.setCRCLength(RF24_CRC_DISABLED);
+  radio.stopListening();
+}
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Starting Bluetooth band jammer...");
+  Serial.println("Starting nrfbox-style jammer...");
 
   spi1.begin(18, 19, 23, 17);
   spi1.setFrequency(20000000);
@@ -34,13 +50,8 @@ void setup() {
     Serial.println("ERROR: Chip1 not connected!");
     while (1) {}
   }
-  Serial.println("Chip1 connected!");
-  radio1.setAutoAck(false);
-  radio1.openWritingPipe(address);
-  radio1.stopListening();
-  radio1.setPALevel(RF24_PA_HIGH);
-  radio1.setDataRate(RF24_1MBPS);
-  radio1.setRetries(0, 0);
+  Serial.println("Radio1 OK!");
+  setupRadio(radio1);
 
   spi2.begin(14, 12, 13, 15);
   spi2.setFrequency(20000000);
@@ -54,38 +65,42 @@ void setup() {
     Serial.println("ERROR: Chip2 not connected!");
     while (1) {}
   }
-  Serial.println("Chip2 connected!");
-  radio2.setAutoAck(false);
-  radio2.openWritingPipe(address);
-  radio2.stopListening();
-  radio2.setPALevel(RF24_PA_HIGH);
-  radio2.setDataRate(RF24_1MBPS);
-  radio2.setRetries(0, 0);
+  Serial.println("Radio2 OK!");
+  setupRadio(radio2);
 
-  Serial.println("Both modules ready — starting sweep!");
+  Serial.println("Both modules ready!");
 }
 
 void loop() {
   if (!radio1.isChipConnected()) {
-    Serial.println("ERROR: Module1 disconnected! Halting.");
+    Serial.println("ERROR: Radio1 disconnected! Halting.");
     while (1) {}
   }
   if (!radio2.isChipConnected()) {
-    Serial.println("ERROR: Module2 disconnected! Halting.");
+    Serial.println("ERROR: Radio2 disconnected! Halting.");
     while (1) {}
   }
 
-  unsigned long start = millis();
-
-  for (int ch = 0; ch <= 39; ch++) {
-    radio1.setChannel(BT_CH_START1 + ch);
+  for (int i = 0; i < group1Count; i++) {
+    radio1.setChannel(channelGroup1[i]);
     radio1.writeFast(&p, 1);
 
-    radio2.setChannel(BT_CH_START2 + ch);
+    radio2.setChannel(channelGroup2[i]);
     radio2.writeFast(&p, 1);
   }
 
-  Serial.print("Sweep took: ");
-  Serial.print(millis() - start);
-  Serial.println("ms");
+  static int sweepCount = 0;
+  static unsigned long startTime = millis();
+  sweepCount++;
+
+  if (sweepCount >= 500) {
+    unsigned long elapsed = millis() - startTime;
+    Serial.print("Still running — 500 sweeps in ");
+    Serial.print(elapsed);
+    Serial.print("ms | avg sweep: ");
+    Serial.print(elapsed / 500);
+    Serial.println("ms");
+    sweepCount = 0;
+    startTime = millis();
+  }
 }
