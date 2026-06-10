@@ -15,19 +15,19 @@ const byte ble_channels[] = {2, 26, 80};
 const int btCount  = sizeof(bluetooth_channels) / sizeof(bluetooth_channels[0]);
 const int bleCount = sizeof(ble_channels) / sizeof(ble_channels[0]);
 
-// skip every other channel — adjacent channels bleed into each other at 1MBPS
-const byte channelGroup1[] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36};
-const byte channelGroup2[] = {40, 44, 48, 52, 56, 60, 64, 68, 72, 76};
+// split channels between two modules
+const byte channelGroup1[] = {2, 5, 8, 11, 32, 34, 46, 48, 50};
+const byte channelGroup2[] = {52, 0, 1, 4, 6, 22, 24, 26, 28, 30, 74, 76, 78, 80};
 
 const int group1Count = sizeof(channelGroup1) / sizeof(channelGroup1[0]);
 const int group2Count = sizeof(channelGroup2) / sizeof(channelGroup2[0]);
 
-byte p = 0xFF; // single byte instead of "xxxxxxxxxxxxxxxx"
+const char p[] = "xxxxxxxxxxxxxxxx"; // same payload as nrfbox
 
 void setupRadio(RF24 &radio) {
   radio.setAutoAck(false);
   radio.setPALevel(RF24_PA_MAX);
-  radio.setDataRate(RF24_2MBPS);
+  radio.setDataRate(RF24_2MBPS);  // back to 2MBPS
   radio.setRetries(0, 0);
   radio.setCRCLength(RF24_CRC_DISABLED);
   radio.stopListening();
@@ -72,28 +72,33 @@ void setup() {
 }
 
 void loop() {
-  if (!radio1.isChipConnected()) {
-    Serial.println("ERROR: Radio1 disconnected! Halting.");
-    while (1) {}
-  }
-  if (!radio2.isChipConnected()) {
-    Serial.println("ERROR: Radio2 disconnected! Halting.");
-    while (1) {}
-  }
+  radio1.setChannel(channelGroup1[0]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[0]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[1]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[1]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[2]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[2]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[3]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[3]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[4]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[4]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[5]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[5]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[6]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[6]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[7]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[7]); radio2.writeFast(&p, 1);
+  radio1.setChannel(channelGroup1[8]); radio1.writeFast(&p, 1);
+  radio2.setChannel(channelGroup2[8]); radio2.writeFast(&p, 1);
 
-  for (int i = 0; i < group1Count; i++) {
-    radio1.setChannel(channelGroup1[i]);
-    radio1.writeFast(&p, 1);
-
-    radio2.setChannel(channelGroup2[i]);
-    radio2.writeFast(&p, 1);
-  }
-
-  static int sweepCount = 0;
+static int sweepCount = 0;
   static unsigned long startTime = millis();
-  sweepCount++;
-
+  sweepCount++;  // ← this was missing
   if (sweepCount >= 500) {
+    if (!radio1.isChipConnected() || !radio2.isChipConnected()) {
+      Serial.println("ERROR: Module disconnected! Halting.");
+      while (1) {}
+    }
     unsigned long elapsed = millis() - startTime;
     Serial.print("Still running — 500 sweeps in ");
     Serial.print(elapsed);
